@@ -1,9 +1,23 @@
-import { IonContent, IonHeader, IonList, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
+import { IonContent, IonHeader, IonList, IonPage, IonTitle, IonToolbar, useIonViewDidEnter } from '@ionic/react';
 import './Tab1.css';
 import RepoItem from '../components/RepoItem';
+import { RepositoryItem } from '../interfaces/RepositoryItem';
+import { useState } from 'react';
+import { fetchRepositories } from '../services/GithubService';
 
 const Tab1: React.FC = () => {
+  const [repos, setRepos] = useState<RepositoryItem[]>([]);
+
+  const loadRepos = async () => {
+    const reposData = await fetchRepositories();
+    setRepos(reposData);
+  };
+
+  useIonViewDidEnter(() => {
+    console.log("IonViewDidEnter - Cargando repositorios");
+    loadRepos();
+  });
+
   return (
     <IonPage>
       <IonHeader>
@@ -18,18 +32,12 @@ const Tab1: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonList>
-          <RepoItem
-            name="android-project"
-            imageUrl="https://www.liderlogo.es/wp-content/uploads/2022/12/Logo-Android-1024x640.png"
-          />
-          <RepoItem
-            name="ios-project"
-            imageUrl="https://cdn.vectorstock.com/i/1000v/21/41/ios-icon-logo-software-phone-apple-symbol-design-vector-46322141.jpg"
-          />
-          <RepoItem
-            name="ionic-project"
-            imageUrl="https://images-cdn.openxcell.com/wp-content/uploads/2024/07/25072610/ionic-inner.svg"
-          />  
+          {repos.map((repo, index) => (
+            <RepoItem
+              key={index}
+              repo={repo}
+            />
+          ))}
         </IonList>
       </IonContent>
     </IonPage>
