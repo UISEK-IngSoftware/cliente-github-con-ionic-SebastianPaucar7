@@ -3,9 +3,9 @@
 
 ## Información del Estudiante
 
-- **Nombre:** [Tu nombre completo aquí]
-- **Carrera:** [Tu carrera]
-- **Fecha de inicio:** [Fecha]
+- **Nombre:** Sebastián Paucar
+- **Carrera:** Ingenieria en Informática
+- **Fecha de inicio:** 10/12/2025
 
 ---
 
