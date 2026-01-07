@@ -1,13 +1,16 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, useIonViewDidEnter } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonViewDidEnter } from '@ionic/react';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/react';
 import { getUserInfo } from '../services/GithubService';
 import { UserInfo } from '../interfaces/UserInfo';
 import { useState } from 'react';
 import './Tab3.css';
+import AuthService from '../services/AuthService';
+import { useHistory } from 'react-router';
+import { logOutOutline } from 'ionicons/icons';
 
 const Tab3: React.FC = () => {
  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-
+const history = useHistory();
  const loadUserInfo = async () => {
     const info = await getUserInfo();
     setUserInfo(info);
@@ -18,7 +21,10 @@ const Tab3: React.FC = () => {
     loadUserInfo();
   })
 
-    
+    const handleLogout = () => {
+      AuthService.logout();
+      history.replace('/login');
+    };
  
   return (
     <IonPage>
@@ -45,6 +51,15 @@ const Tab3: React.FC = () => {
             {userInfo?.bio}
           </IonCardContent>
         </IonCard>
+
+        <IonButton
+        expand="block"
+        color="danger"
+          onClick={handleLogout}
+          >
+        <IonIcon slot="start" icon={logOutOutline} />
+        Cerrar sesión
+        </IonButton>
       </IonContent>
     </IonPage>
   );
