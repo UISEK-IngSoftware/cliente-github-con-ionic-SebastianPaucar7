@@ -5,7 +5,7 @@
 
 - **Nombre:** Sebastián Paucar
 - **Carrera:** Ingenieria en Informática
-- **Fecha de inicio:** 10/12/2025
+- **Fecha de inicio:** 14/1/2026
 
 ---
 
