@@ -71,3 +71,34 @@ export const getUserInfo = async (): Promise<UserInfo> => {
         return userNotFound;
     }
 };
+// ===================== DELETE REPO (NUEVO) =====================
+export const deleteRepository = async (
+    owner: string,
+    repoName: string
+): Promise<boolean> => {
+    try {
+        await githubApi.delete(`/repos/${owner}/${repoName}`);
+        return true;
+    } catch (error) {
+        console.error("Error al eliminar repositorio:", error);
+        return false;
+    }
+};
+// PUT /repos/{owner}/{repo}
+export const updateRepository = async (
+  owner: string,
+  repoName: string,
+  data: Partial<RepositoryItem>
+): Promise<boolean> => {
+  try {
+    await githubApi.patch(`/repos/${owner}/${repoName}`, {
+      name: data.name,
+      description: data.description,
+      private: data.private,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar repositorio:", error);
+    return false;
+  }
+};
