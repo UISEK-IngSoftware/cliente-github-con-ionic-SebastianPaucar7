@@ -6,99 +6,111 @@ import AuthService from "./AuthService";
 const GITHUB_API_URL = import.meta.env.VITE_API_URL;
 
 const githubApi = axios.create({
-    baseURL: GITHUB_API_URL,
+  baseURL: GITHUB_API_URL,
 });
 
-githubApi.interceptors.request.use((config) => {
-    const AuthHeader = AuthService.getAuthHeader();
-    if (AuthHeader) {
-        config.headers.Authorization = AuthHeader;
+// Interceptor para agregar el token de autorización
+githubApi.interceptors.request.use(
+  (config) => {
+    const authHeader = AuthService.getAuthHeader();
+    if (authHeader) {
+      config.headers.Authorization = authHeader;
     }
     return config;
-}, (error) => {
-    return Promise.reject(error);
-});
+  },
+  (error) => Promise.reject(error)
+);
 
+// GET /user/repos
 export const fetchRepositories = async (): Promise<RepositoryItem[]> => {
-    try {
-        const response = await githubApi.get(`/user/repos` , {
-            params: {
-                per_page: 100,
-                sort: "created",
-                direction: "desc",
-                affiliation: "owner",
-            }
+  try {
+    const response = await githubApi.get("/user/repos", {
+      params: {
+        per_page: 100,
+        sort: "created",
+        direction: "desc",
+        affiliation: "owner",
+      },
+    });
+
+    return response.data.map((repo: any) => ({
+      name: repo.name,
+      description: repo.description,
+      imageUrl: repo.owner?.avatar_url,
+      owner: repo.owner?.login,
+      language: repo.language,
+    }));
+  } catch (error) {
+    console.error("Error al obtener repositorios", error);
+    return [];
+  }
+};
+
+// POST + PATCH para garantizar que description se guarde
+export const createRepository = async (repo: RepositoryItem) => {
+  try {
+    // 1️⃣ Crear repo (solo con nombre)
+    const response = await githubApi.post("/user/repos", {
+      name: repo.name,
+      description: repo.description || "",
+      private: false,
+    });
+
+    // 2️⃣ Actualizar descripción si existe
+    if (repo.description && repo.description.trim() !== "") {
+      const owner = response.data.owner?.login;
+      const repoName = response.data.name;
+
+      if (owner && repoName) {
+        await githubApi.patch(`/repos/${owner}/${repoName}`, {
+          description: repo.description,
         });
-
-        const repositories: RepositoryItem[] = response.data.map((repo: any) => ({
-            name: repo.name,
-            description: repo.description ? repo.description : null,
-            imageUrl: repo.owner ? repo.owner.avatar_url : null,
-            owner: repo.owner ? repo.owner.login : null,
-            language: repo.language ? repo.language : null,
-        }));
-
-        return repositories;
-
-    } catch (error) {
-        console.error("Ocurrió un error al obtener repositorios:", error);
-        return [];
+      }
     }
-}
 
-export const createRepository = async (repo: RepositoryItem): Promise<void> => {
-    try {
-        const response = await githubApi.post(`/user/repos`, repo)
-        console.log("Repositorio creado", response.data);
-        
-    } catch (error) {
-        console.error("Ocurrió un error al crear el repositorio:", error);
-    }
+    return response.data;
+  } catch (error) {
+    console.error("Error al crear repositorio:", error);
+    throw error;
+  }
 };
 
-export const getUserInfo = async (): Promise<UserInfo> => {
-    try {
-        const response = await githubApi.get(`/user`);
-        return response.data as UserInfo;
-    } catch (error) {
-        console.error("Ocurrió un error al obtener la información del usuario:", error);
-        const userNotFound : UserInfo = {
-            login: "undefined",
-            name: "Usuario no encontrado",
-            bio: "No se pudo obtener la información del usuario.",
-            avatar_url: 'https://www.svgrepo.com/show/77036/user.svg',
-        }
-        return userNotFound;
-    }
-};
-// ===================== DELETE REPO (NUEVO) =====================
-export const deleteRepository = async (
-    owner: string,
-    repoName: string
-): Promise<boolean> => {
-    try {
-        await githubApi.delete(`/repos/${owner}/${repoName}`);
-        return true;
-    } catch (error) {
-        console.error("Error al eliminar repositorio:", error);
-        return false;
-    }
-};
-// PUT /repos/{owner}/{repo}
+// PATCH /repos/{owner}/{repo}
 export const updateRepository = async (
   owner: string,
-  repoName: string,
-  data: Partial<RepositoryItem>
-): Promise<boolean> => {
+  repo: string,
+  data: { name?: string; description?: string }
+) => {
   try {
-    await githubApi.patch(`/repos/${owner}/${repoName}`, {
-      name: data.name,
-      description: data.description,
-      private: data.private,
-    });
-    return true;
+    await githubApi.patch(`/repos/${owner}/${repo}`, data);
   } catch (error) {
     console.error("Error al actualizar repositorio:", error);
-    return false;
+    throw error;
+  }
+};
+
+// DELETE /repos/{owner}/{repo}
+export const deleteRepository = async (owner: string, repo: string) => {
+  try {
+    await githubApi.delete(`/repos/${owner}/${repo}`);
+  } catch (error) {
+    console.error("Error al eliminar repositorio:", error);
+    throw error;
+  }
+};
+
+// GET /user
+export const getUserInfo = async (): Promise<UserInfo> => {
+  try {
+    const response = await githubApi.get("/user");
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener info de usuario:", error);
+    return {
+      login: "undefined",
+      name: "Usuario no encontrado",
+      bio: "No se pudo obtener la información",
+      avatar_url: "",
+    };
   }
 };
